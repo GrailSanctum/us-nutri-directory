@@ -1,0 +1,8 @@
+flask==3.0.2
+pandas==2.1.4
+requests==2.31.0
+gunicorn==21.2.0
+curl-cffi==0.6.b7
+zipcodes==1.1.2
+phonenumbers==8.13.30
+beautifulsoup4==4.12.3
