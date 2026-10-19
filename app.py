@@ -29,9 +29,10 @@ app.secret_key = "sup_production_secret_key_2026"
 CSV_FILE = "supplements_clean.csv"
 LEADS_FILE = "leads_database.csv"
 
-# Вставьте сюда данные вашего Telegram-бота, если хотите получать уведомления о лидах
-TELEGRAM_BOT_TOKEN = "ЗАМЕНИТЕ_НА_ВАШ_ТОКЕН_БОТА"
-TELEGRAM_CHAT_ID = "ЗАМЕНИТЕ_НА_ВАШ_ID"
+import os
+
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
 def send_telegram_alert(lead_info):
     if "ЗАМЕНИТЕ" in TELEGRAM_BOT_TOKEN or not TELEGRAM_BOT_TOKEN:
