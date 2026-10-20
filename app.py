@@ -1,3 +1,4 @@
+import os
 import sys
 import subprocess
 
@@ -17,28 +18,25 @@ for pkg_name, import_name in [
 import warnings
 warnings.filterwarnings("ignore")
 
-import threading
 import datetime
 import requests
 import pandas as pd
-from flask import Flask, render_template_string, request, url_for, redirect
+from flask import Flask, render_template_string, request
 
 app = Flask(__name__)
-app.secret_key = "sup_production_secret_key_2026"
+app.secret_key = "sup_production_secret_key_2026_cro"
 
 CSV_FILE = "supplements_clean.csv"
 LEADS_FILE = "leads_database.csv"
-
-import os
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
 def send_telegram_alert(lead_info):
-    if "ЗАМЕНИТЕ" in TELEGRAM_BOT_TOKEN or not TELEGRAM_BOT_TOKEN:
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         return
     text = (
-        f"🚨 <b>НОВЫЙ RFQ-ЛИД С САЙТА!</b>\n\n"
+        f"🚨 <b>ГОРЯЧИЙ RFQ-ЛИД С САЙТА!</b>\n\n"
         f"🏢 <b>Завод:</b> {lead_info['supplier_slug']}\n"
         f"👤 <b>Бренд:</b> {lead_info['brand_name']}\n"
         f"📧 <b>Email:</b> {lead_info['email']}\n"
@@ -59,27 +57,20 @@ def load_data():
     df = df.fillna("")
     return df
 
-def save_lead_to_db(lead_data):
-    df_lead = pd.DataFrame([lead_data])
-    if os.path.exists(LEADS_FILE):
-        df_lead.to_csv(LEADS_FILE, mode='a', header=False, index=False, encoding='utf-8-sig')
-    else:
-        df_lead.to_csv(LEADS_FILE, index=False, encoding='utf-8-sig')
-    send_telegram_alert(lead_data)
-
 BASE_LAYOUT = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}US Supplement Contract Manufacturing B2B Directory{% endblock %}</title>
+    <title>{% block title %}USA Supplement Contract Manufacturing B2B Matchmaker{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .hero-section { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 70px 0; }
+        .hero-section { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 80px 0; }
         .card-supplier { transition: transform 0.2s, box-shadow 0.2s; border: 1px solid #e2e8f0; }
         .card-supplier:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
         .badge-form { background-color: #f1f5f9; color: #334155; font-weight: 500; }
+        .trust-badge { background: #f8fafc; border-left: 4px solid #0d6efd; padding: 15px; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-light">
@@ -89,8 +80,8 @@ BASE_LAYOUT = """
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="/">Directory</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/contact">Contacts</a></li>
-                    <li class="nav-item ms-2"><a class="btn btn-primary text-white px-3" href="/#search-section">Find Manufacturer</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/contact">About & Partnership</a></li>
+                    <li class="nav-item ms-2"><a class="btn btn-primary text-white px-3" href="/#search-section">Get Matched</a></li>
                 </ul>
             </div>
         </div>
@@ -98,7 +89,7 @@ BASE_LAYOUT = """
     {{ content | safe }}
     <footer class="bg-dark text-white py-5 mt-5">
         <div class="container text-center text-secondary small">
-            &copy; 2026 US Supplement Directory. Free B2B Lead Generation Platform.
+            &copy; 2026 USA Supplement Contract Manufacturing Network. Verified FDA & cGMP Facilities.
         </div>
     </footer>
 </body>
@@ -107,28 +98,79 @@ BASE_LAYOUT = """
 
 INDEX_TEMPLATE = """
 <div class="hero-section text-center" id="search-section">
-    <div class="container">
-        <h1 class="display-5 fw-bold mb-3">Find Verified US Supplement Contract Manufacturers</h1>
-        <p class="lead text-secondary mb-4">Connect directly with FDA-registered, cGMP-certified facilities across 35 US states.</p>
-        <form action="/" method="GET" class="row g-3 justify-content-center">
-            <div class="col-md-4">
-                <input type="text" name="q" class="form-control form-control-lg" placeholder="Search by name, form, city..." value="{{ query }}">
-            </div>
-            <div class="col-md-3">
-                <select name="state" class="form-select form-control-lg">
-                    <option value="">All US States ({{ states|length }})</option>
-                    {% for st in states %}
-                    <option value="{{ st }}" {% if selected_state == st %}selected{% endif %}>{{ st }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary btn-lg w-100">Filter</button>
+    <div class="container" style="max-width: 900px;">
+        <span class="badge bg-primary text-white mb-3 px-3 py-2">Verified US B2B Matchmaking Platform</span>
+        <h1 class="display-5 fw-bold mb-3">Connect with Verified US Supplement Contract Manufacturers</h1>
+        <p class="lead text-secondary mb-4">Direct RFQ routing to FDA-registered, cGMP-certified facilities across 35 US states. Lower your MOQ, accelerate time-to-market.</p>
+        
+        <form action="/" method="GET" class="card p-4 shadow-lg border-0 bg-white text-dark">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-start w-100">Keyword / Name</label>
+                    <input type="text" name="q" class="form-control" placeholder="e.g. Gummies, Softgels..." value="{{ query }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-start w-100">Supplement Form</label>
+                    <select name="form" class="form-select">
+                        <option value="">All Forms</option>
+                        <option value="Capsules" {% if selected_form == 'Capsules' %}selected{% endif %}>Capsules</option>
+                        <option value="Tablets" {% if selected_form == 'Tablets' %}selected{% endif %}>Tablets</option>
+                        <option value="Gummies" {% if selected_form == 'Gummies' %}selected{% endif %}>Gummies</option>
+                        <option value="Powders" {% if selected_form == 'Powders' %}selected{% endif %}>Powders</option>
+                        <option value="Liquids" {% if selected_form == 'Liquids' %}selected{% endif %}>Liquids</option>
+                        <option value="Softgels" {% if selected_form == 'Softgels' %}selected{% endif %}>Softgels</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-start w-100">US State</label>
+                    <select name="state" class="form-select">
+                        <option value="">All States</option>
+                        {% for st in states %}
+                        <option value="{{ st }}" {% if selected_state == st %}selected{% endif %}>{{ st }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100 fw-bold py-2">Filter</button>
+                </div>
             </div>
         </form>
     </div>
 </div>
+
+<!-- How It Works Section (CRO Trust Booster) -->
 <div class="container my-5">
+    <div class="row text-center g-4">
+        <div class="col-md-4">
+            <div class="card p-4 h-100 border-0 shadow-sm">
+                <div class="h1 text-primary mb-3">1</div>
+                <h5 class="fw-bold">Select Manufacturer</h5>
+                <p class="text-secondary small">Browse verified US facilities matching your product form, certifications, and target MOQ.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 h-100 border-0 shadow-sm">
+                <div class="h1 text-primary mb-3">2</div>
+                <h5 class="fw-bold">Submit Secure RFQ</h5>
+                <p class="text-secondary small">Send your exact formulation and batch requirements securely through our platform.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card p-4 h-100 border-0 shadow-sm">
+                <div class="h1 text-primary mb-3">3</div>
+                <h5 class="fw-bold">Direct Matching</h5>
+                <p class="text-secondary small">Your project is instantly routed to the facility's executive team for priority quoting.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-dark">Verified Facilities ({{ suppliers|length }})</h3>
+        <span class="text-muted small">Showing vetted US contract manufacturers</span>
+    </div>
+    
     <div class="row row-cols-1 row-cols-md-3 g-4">
         {% for s in suppliers %}
         <div class="col">
@@ -141,16 +183,19 @@ INDEX_TEMPLATE = """
                     <p class="text-muted small mb-2">📍 {{ s.city }}, {{ s.state }}</p>
                     <p class="card-text text-secondary small">{{ s.short_description }}</p>
                     <div class="mb-3">
-                        <span class="fw-bold small text-dark">Forms:</span>
+                        <span class="fw-bold small text-dark">Capabilities:</span>
                         <div class="d-flex flex-wrap gap-1 mt-1">
                             {% for form in s.supplement_forms.split(', ') %}
                             <span class="badge badge-form">{{ form }}</span>
                             {% endfor %}
                         </div>
                     </div>
+                    <div class="trust-badge my-3 small text-secondary">
+                        🔒 Verified FDA / cGMP compliant facility network.
+                    </div>
                     <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
                         <span class="small fw-bold text-primary">MOQ: {{ "{:,}".format(s.min_moq|int) }} units</span>
-                        <a href="/supplier/{{ s.slug }}" class="btn btn-outline-dark btn-sm">View Profile</a>
+                        <a href="/supplier/{{ s.slug }}" class="btn btn-dark btn-sm px-3">Request Quote</a>
                     </div>
                 </div>
             </div>
@@ -174,17 +219,23 @@ DETAIL_TEMPLATE = """
                 <h1 class="h2 fw-bold text-dark mb-2">{{ supplier.name }}</h1>
                 <p class="text-muted fs-5 mb-3">📍 Location: <strong>{{ supplier.city }}, {{ supplier.state }}</strong></p>
                 <p class="text-secondary mb-4">{{ supplier.short_description }}</p>
+                
+                <div class="trust-badge mb-4">
+                    <h6 class="fw-bold text-dark mb-1">🛡️ Verified Matchmaking Protection</h6>
+                    <p class="small text-secondary mb-0">To ensure service quality and secure priority processing, all RFQs for this facility are handled exclusively through our platform matching system.</p>
+                </div>
+
                 <ul class="list-group list-group-flush mb-4">
-                    <li class="list-group-item d-flex justify-content-between"><span>Website:</span> <a href="{{ supplier.website }}" target="_blank">{{ supplier.website }}</a></li>
-                    <li class="list-group-item d-flex justify-content-between"><span>Forms:</span> <strong>{{ supplier.supplement_forms }}</strong></li>
-                    <li class="list-group-item d-flex justify-content-between"><span>Min MOQ:</span> <strong>{{ "{:,}".format(supplier.min_moq|int) }} units</strong></li>
-                    <li class="list-group-item d-flex justify-content-between"><span>Certifications:</span> <strong>{{ supplier.certifications }}</strong></li>
+                    <li class="list-group-item d-flex justify-content-between py-3"><span>Supported Forms:</span> <strong>{{ supplier.supplement_forms }}</strong></li>
+                    <li class="list-group-item d-flex justify-content-between py-3"><span>Minimum Order Quantity (MOQ):</span> <strong>{{ "{:,}".format(supplier.min_moq|int) }} units</strong></li>
+                    <li class="list-group-item d-flex justify-content-between py-3"><span>Certifications:</span> <strong>{{ supplier.certifications }}</strong></li>
                 </ul>
             </div>
         </div>
         <div class="col-lg-4" id="rfq">
             <div class="card p-4 shadow-sm border-0 bg-white sticky-top" style="top: 90px;">
                 <h3 class="h4 fw-bold mb-3 text-dark">Request a Quote (RFQ)</h3>
+                <p class="small text-muted mb-3">Connect directly with {{ supplier.name }} through our secure matchmaking desk.</p>
                 <form method="POST" action="/rfq/{{ supplier.slug }}">
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Your Brand Name</label>
@@ -205,10 +256,10 @@ DETAIL_TEMPLATE = """
                         <input type="number" name="batch_size" class="form-control" value="{{ supplier.min_moq }}">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold">Project Details</label>
-                        <textarea name="details" class="form-control" rows="3" placeholder="Describe requirements..."></textarea>
+                        <label class="form-label small fw-bold">Project Details & Formulation</label>
+                        <textarea name="details" class="form-control" rows="3" placeholder="Describe ingredients, packaging requirements..."></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-lg w-100">Submit RFQ Lead</button>
+                    <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold">Submit RFQ Lead</button>
                 </form>
             </div>
         </div>
@@ -219,10 +270,15 @@ DETAIL_TEMPLATE = """
 CONTACT_TEMPLATE = """
 <div class="container my-5" style="max-width: 800px;">
     <div class="card p-5 shadow-sm border-0">
-        <h1 class="fw-bold mb-4">Contacts & Support</h1>
-        <p class="text-secondary">For any questions regarding directory listings or partnerships, reach out via Telegram or Email.</p>
-        <p class="fw-bold">📧 Email: admin@usanutricontracts.com</p>
-        <div class="mt-4"><a href="/" class="btn btn-dark">Back to Directory</a></div>
+        <h1 class="fw-bold mb-4">About USA Nutraceutical Network</h1>
+        <p class="text-secondary lead">We are the premier B2B matchmaking platform bridging emerging health brands with FDA-registered, cGMP-compliant contract manufacturers across the United States.</p>
+        <hr class="my-4">
+        <h5 class="fw-bold">For Brands & Sellers:</h5>
+        <p class="text-secondary">Streamline your sourcing, get verified pricing, and eliminate months of cold outreach.</p>
+        <h5 class="fw-bold mt-4">For Contract Manufacturers:</h5>
+        <p class="text-secondary">Want to receive qualified, high-intent RFQs directly from vetted US brands? Partner with our network.</p>
+        <p class="fw-bold mt-4">📧 Direct Inquiry: admin@usanutricontracts.com</p>
+        <div class="mt-4"><a href="/" class="btn btn-dark px-4">Back to Directory</a></div>
     </div>
 </div>
 """
@@ -234,12 +290,20 @@ def render_page(inner_html, **context):
 def index():
     df = load_data()
     if df.empty: return "Dataset not found."
+    
     query = request.args.get("q", "").strip().lower()
     selected_state = request.args.get("state", "").strip()
-    if query: df = df[df.apply(lambda r: r.astype(str).str.lower().str.contains(query).any(), axis=1)]
-    if selected_state: df = df[df["state_code"] == selected_state]
+    selected_form = request.args.get("form", "").strip()
+
+    if query:
+        df = df[df.apply(lambda r: r.astype(str).str.lower().str.contains(query).any(), axis=1)]
+    if selected_state:
+        df = df[df["state_code"] == selected_state]
+    if selected_form:
+        df = df[df["supplement_forms"].str.contains(selected_form, case=False, na=False)]
+
     states = sorted(load_data()["state_code"].unique().tolist())
-    return render_page(INDEX_TEMPLATE, suppliers=df.to_dict(orient="records"), states=states, query=query, selected_state=selected_state)
+    return render_page(INDEX_TEMPLATE, suppliers=df.to_dict(orient="records"), states=states, query=query, selected_state=selected_state, selected_form=selected_form)
 
 @app.route("/supplier/<slug>")
 def detail(slug):
@@ -263,13 +327,22 @@ def submit_rfq(slug):
         "batch_size": request.form.get("batch_size"),
         "details": request.form.get("details")
     }
-    save_lead_to_db(lead_data)
+    
+    # Сохраняем лид локально / отправляем в телеграм
+    df_lead = pd.DataFrame([lead_data])
+    if os.path.exists(LEADS_FILE):
+        df_lead.to_csv(LEADS_FILE, mode='a', header=False, index=False, encoding='utf-8-sig')
+    else:
+        df_lead.to_csv(LEADS_FILE, index=False, encoding='utf-8-sig')
+        
+    send_telegram_alert(lead_data)
+    
     success_html = """
     <div class="container my-5 text-center">
         <div class="card p-5 shadow-sm border-0 mx-auto" style="max-width: 600px;">
-            <h2 class="fw-bold mb-3 text-success">✓ RFQ Lead Submitted!</h2>
-            <p class="text-secondary mb-4">Your request has been saved and sent to administration.</p>
-            <a href="/" class="btn btn-primary btn-lg">Back to Directory</a>
+            <h2 class="fw-bold mb-3 text-success">✓ RFQ Successfully Submitted!</h2>
+            <p class="text-secondary mb-4">Your project specifications have been securely routed to the manufacturer's matching desk and our administrative team. We will be in touch shortly.</p>
+            <a href="/" class="btn btn-primary btn-lg px-4">Back to Directory</a>
         </div>
     </div>
     """
