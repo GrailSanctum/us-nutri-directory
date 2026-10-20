@@ -24,13 +24,34 @@ import pandas as pd
 from flask import Flask, render_template_string, request
 
 app = Flask(__name__)
-app.secret_key = "sup_production_secret_key_2026_pro"
+app.secret_key = "sup_production_secret_key_2026_analytics"
 
 CSV_FILE = "supplements_clean.csv"
 LEADS_FILE = "leads_database.csv"
+VISITOR_LOG_FILE = "visitors_log.csv"
+CRON_SECRET = "my_super_secret_cron_token_2026"
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+
+# Автоматический сбор статистики по каждому запросу
+@app.before_request
+def log_visitor():
+    if request.path.startswith('/static') or request.path.startswith('/cron'):
+        return
+    log_data = {
+        "timestamp": datetime.datetime.now().isoformat(),
+        "ip": request.remote_addr,
+        "path": request.path
+    }
+    df_log = pd.DataFrame([log_data])
+    try:
+        if os.path.exists(VISITOR_LOG_FILE):
+            df_log.to_csv(VISITOR_LOG_FILE, mode='a', header=False, index=False, encoding='utf-8-sig')
+        else:
+            df_log.to_csv(VISITOR_LOG_FILE, index=False, encoding='utf-8-sig')
+    except Exception as e:
+        print("Ошибка логирования:", e)
 
 def send_telegram_alert(lead_info):
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
@@ -335,7 +356,7 @@ def submit_rfq(slug):
     if os.path.exists(LEADS_FILE):
         df_lead.to_csv(LEADS_FILE, mode='a', header=False, index=False, encoding='utf-8-sig')
     else:
-        df_lead.to_csv(LEADS_FILE, index=False, encoding='utf-8-spec')
+        df_lead.to_csv(LEADS_FILE, index=False, encoding='utf-8-sig')
         
     send_telegram_alert(lead_data)
     
@@ -349,6 +370,56 @@ def submit_rfq(slug):
     </div>
     """
     return render_page(success_html)
+
+# Секретный маршрут для генерации утренней статистики
+@app.route("/cron/daily-report")
+def daily_report():
+    token = request.args.get("token", "")
+    if token != CRON_SECRET:
+        return "Unauthorized", 403
+    
+    today_str = datetime.datetime.now().strftime("%Y-%m-%d")
+    total_views = 0
+    unique_ips = set()
+    
+    if os.path.exists(VISITOR_LOG_FILE):
+        try:
+            df_logs = pd.read_csv(VISITOR_LOG_FILE)
+            if not df_logs.empty and "timestamp" in df_logs.columns:
+                df_logs["date"] = df_logs["timestamp"].str[:10]
+                df_today = df_logs[df_logs["date"] == today_str]
+                total_views = len(df_today)
+                if "ip" in df_today.columns:
+                    unique_ips = set(df_today["ip"].dropna().tolist())
+        except Exception as e:
+            print("Ошибка чтения логов:", e)
+
+    leads_today = 0
+    if os.path.exists(LEADS_FILE):
+        try:
+            df_leads = pd.read_csv(LEADS_FILE)
+            if not df_leads.empty and "timestamp" in df_leads.columns:
+                df_leads["date"] = df_leads["timestamp"].str[:10]
+                leads_today = len(df_leads[df_leads["date"] == today_str])
+        except Exception as e:
+            print("Ошибка чтения лидов:", e)
+
+    text = (
+        f"📊 <b>ЕЖЕДНЕВНАЯ СТАТИСТИКА САЙТА</b>\n"
+        f"📅 Дата: <code>{today_str}</code>\n\n"
+        f"👀 Просмотров страниц: <b>{total_views}</b>\n"
+        f"👥 Уникальных посетителей (IP): <b>{len(unique_ips)}</b>\n"
+        f"📩 Новых RFQ-лидов: <b>{leads_today}</b>"
+    )
+    
+    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        try:
+            requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": text, "parse_mode": "HTML"}, timeout=5)
+        except Exception as e:
+            print("Ошибка отправки отчета в Telegram:", e)
+            
+    return f"Report sent: {total_views} views, {len(unique_ips)} unique IPs, {leads_today} leads."
 
 if __name__ == "__main__":
     app.run(port=5000, debug=False)
