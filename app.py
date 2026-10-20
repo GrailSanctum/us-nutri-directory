@@ -24,7 +24,7 @@ import pandas as pd
 from flask import Flask, render_template_string, request
 
 app = Flask(__name__)
-app.secret_key = "sup_production_secret_key_2026_cro"
+app.secret_key = "sup_production_secret_key_2026_pro"
 
 CSV_FILE = "supplements_clean.csv"
 LEADS_FILE = "leads_database.csv"
@@ -63,7 +63,7 @@ BASE_LAYOUT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}USA Supplement Contract Manufacturing B2B Matchmaker{% endblock %}</title>
+    <title>{% block title %}USA Supplement Contract Manufacturing B2B Sourcing{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .hero-section { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 80px 0; }
@@ -80,7 +80,7 @@ BASE_LAYOUT = """
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="/">Directory</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/contact">About & Partnership</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/contact">Support & Desk</a></li>
                     <li class="nav-item ms-2"><a class="btn btn-primary text-white px-3" href="/#search-section">Get Matched</a></li>
                 </ul>
             </div>
@@ -89,7 +89,7 @@ BASE_LAYOUT = """
     {{ content | safe }}
     <footer class="bg-dark text-white py-5 mt-5">
         <div class="container text-center text-secondary small">
-            &copy; 2026 USA Supplement Contract Manufacturing Network. Verified FDA & cGMP Facilities.
+            &copy; 2026 USA Supplement Contract Manufacturing Network. Secure B2B Digital Sourcing Desk.
         </div>
     </footer>
 </body>
@@ -99,9 +99,9 @@ BASE_LAYOUT = """
 INDEX_TEMPLATE = """
 <div class="hero-section text-center" id="search-section">
     <div class="container" style="max-width: 900px;">
-        <span class="badge bg-primary text-white mb-3 px-3 py-2">Verified US B2B Matchmaking Platform</span>
+        <span class="badge bg-primary text-white mb-3 px-3 py-2">Verified US B2B Sourcing Desk</span>
         <h1 class="display-5 fw-bold mb-3">Connect with Verified US Supplement Contract Manufacturers</h1>
-        <p class="lead text-secondary mb-4">Direct RFQ routing to FDA-registered, cGMP-certified facilities across 35 US states. Lower your MOQ, accelerate time-to-market.</p>
+        <p class="lead text-secondary mb-4">Direct RFQ routing to FDA-registered, cGMP-certified facilities across 35 US states. Scale your brand with verified domestic partners.</p>
         
         <form action="/" method="GET" class="card p-4 shadow-lg border-0 bg-white text-dark">
             <div class="row g-3">
@@ -138,28 +138,27 @@ INDEX_TEMPLATE = """
     </div>
 </div>
 
-<!-- How It Works Section (CRO Trust Booster) -->
 <div class="container my-5">
     <div class="row text-center g-4">
         <div class="col-md-4">
             <div class="card p-4 h-100 border-0 shadow-sm">
                 <div class="h1 text-primary mb-3">1</div>
-                <h5 class="fw-bold">Select Manufacturer</h5>
-                <p class="text-secondary small">Browse verified US facilities matching your product form, certifications, and target MOQ.</p>
+                <h5 class="fw-bold">Select Facility</h5>
+                <p class="text-secondary small">Filter verified US plants by product form, certifications, and minimum batch sizes.</p>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card p-4 h-100 border-0 shadow-sm">
                 <div class="h1 text-primary mb-3">2</div>
-                <h5 class="fw-bold">Submit Secure RFQ</h5>
-                <p class="text-secondary small">Send your exact formulation and batch requirements securely through our platform.</p>
+                <h5 class="fw-bold">Submit Digital RFQ</h5>
+                <p class="text-secondary small">Send structured project parameters securely through our automated routing desk.</p>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card p-4 h-100 border-0 shadow-sm">
                 <div class="h1 text-primary mb-3">3</div>
-                <h5 class="fw-bold">Direct Matching</h5>
-                <p class="text-secondary small">Your project is instantly routed to the facility's executive team for priority quoting.</p>
+                <h5 class="fw-bold">Fast Direct Quote</h5>
+                <p class="text-secondary small">Receive priority commercial responses directly from manufacturing executives.</p>
             </div>
         </div>
     </div>
@@ -168,7 +167,7 @@ INDEX_TEMPLATE = """
 <div class="container my-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold text-dark">Verified Facilities ({{ suppliers|length }})</h3>
-        <span class="text-muted small">Showing vetted US contract manufacturers</span>
+        <span class="text-muted small">Vetted US contract manufacturing network</span>
     </div>
     
     <div class="row row-cols-1 row-cols-md-3 g-4">
@@ -221,8 +220,8 @@ DETAIL_TEMPLATE = """
                 <p class="text-secondary mb-4">{{ supplier.short_description }}</p>
                 
                 <div class="trust-badge mb-4">
-                    <h6 class="fw-bold text-dark mb-1">🛡️ Verified Matchmaking Protection</h6>
-                    <p class="small text-secondary mb-0">To ensure service quality and secure priority processing, all RFQs for this facility are handled exclusively through our platform matching system.</p>
+                    <h6 class="fw-bold text-dark mb-1">🛡️ Secure Sourcing Desk Protection</h6>
+                    <p class="small text-secondary mb-0">To ensure service quality, prevent data leaks, and secure priority executive routing, all project inquiries for this facility are handled exclusively through our digital matchmaking platform.</p>
                 </div>
 
                 <ul class="list-group list-group-flush mb-4">
@@ -235,7 +234,7 @@ DETAIL_TEMPLATE = """
         <div class="col-lg-4" id="rfq">
             <div class="card p-4 shadow-sm border-0 bg-white sticky-top" style="top: 90px;">
                 <h3 class="h4 fw-bold mb-3 text-dark">Request a Quote (RFQ)</h3>
-                <p class="small text-muted mb-3">Connect directly with {{ supplier.name }} through our secure matchmaking desk.</p>
+                <p class="small text-muted mb-3">Submit parameters to route directly to {{ supplier.name }}.</p>
                 <form method="POST" action="/rfq/{{ supplier.slug }}">
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Your Brand Name</label>
@@ -270,14 +269,18 @@ DETAIL_TEMPLATE = """
 CONTACT_TEMPLATE = """
 <div class="container my-5" style="max-width: 800px;">
     <div class="card p-5 shadow-sm border-0">
-        <h1 class="fw-bold mb-4">About USA Nutraceutical Network</h1>
-        <p class="text-secondary lead">We are the premier B2B matchmaking platform bridging emerging health brands with FDA-registered, cGMP-compliant contract manufacturers across the United States.</p>
-        <hr class="my-4">
-        <h5 class="fw-bold">For Brands & Sellers:</h5>
-        <p class="text-secondary">Streamline your sourcing, get verified pricing, and eliminate months of cold outreach.</p>
-        <h5 class="fw-bold mt-4">For Contract Manufacturers:</h5>
-        <p class="text-secondary">Want to receive qualified, high-intent RFQs directly from vetted US brands? Partner with our network.</p>
-        <p class="fw-bold mt-4">📧 Direct Inquiry: admin@usanutricontracts.com</p>
+        <h1 class="fw-bold mb-4">Support & Partnership Desk</h1>
+        <p class="text-secondary lead">USA Nutraceutical Directory operates as a secure digital B2B sourcing and matchmaking gateway, bridging emerging health brands with FDA-registered, cGMP-compliant manufacturing facilities across the US.</p>
+        
+        <div class="trust-badge my-4">
+            <h6 class="fw-bold text-dark">ℹ️ Asynchronous Digital Operations Policy</h6>
+            <p class="small text-secondary mb-0">To guarantee data precision, protect proprietary supplement formulations, and provide rapid turnaround for all participating manufacturers, our platform operates on an <strong>exclusive asynchronous digital model</strong>. We do not provide phone support; all project reviews, RFQ routings, and partnership inquiries are handled digitally with a 24-hour response window.</p>
+        </div>
+
+        <h5 class="fw-bold mt-4">Official Contact Channels:</h5>
+        <p class="text-secondary mb-2">📧 <strong>General & Partnership Inquiries:</strong> admin@usanutricontracts.com</p>
+        <p class="text-secondary mb-4">💼 <strong>Sourcing Desk:</strong> active 24/7 via automated digital routing.</p>
+
         <div class="mt-4"><a href="/" class="btn btn-dark px-4">Back to Directory</a></div>
     </div>
 </div>
@@ -328,12 +331,11 @@ def submit_rfq(slug):
         "details": request.form.get("details")
     }
     
-    # Сохраняем лид локально / отправляем в телеграм
     df_lead = pd.DataFrame([lead_data])
     if os.path.exists(LEADS_FILE):
         df_lead.to_csv(LEADS_FILE, mode='a', header=False, index=False, encoding='utf-8-sig')
     else:
-        df_lead.to_csv(LEADS_FILE, index=False, encoding='utf-8-sig')
+        df_lead.to_csv(LEADS_FILE, index=False, encoding='utf-8-spec')
         
     send_telegram_alert(lead_data)
     
@@ -341,7 +343,7 @@ def submit_rfq(slug):
     <div class="container my-5 text-center">
         <div class="card p-5 shadow-sm border-0 mx-auto" style="max-width: 600px;">
             <h2 class="fw-bold mb-3 text-success">✓ RFQ Successfully Submitted!</h2>
-            <p class="text-secondary mb-4">Your project specifications have been securely routed to the manufacturer's matching desk and our administrative team. We will be in touch shortly.</p>
+            <p class="text-secondary mb-4">Your project specifications have been securely routed to the manufacturer's matching desk. Our team will coordinate the follow-up shortly.</p>
             <a href="/" class="btn btn-primary btn-lg px-4">Back to Directory</a>
         </div>
     </div>
