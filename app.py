@@ -378,7 +378,10 @@ def daily_report():
     if token != CRON_SECRET:
         return "Unauthorized", 403
     
-    today_str = datetime.datetime.now().strftime("%Y-%m-%d")
+    # Берем дату ВЧЕРАШНЕГО дня (полные прошедшие сутки)
+    yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+    target_date = yesterday.strftime("%Y-%m-%d")
+    
     total_views = 0
     unique_ips = set()
     
@@ -387,7 +390,8 @@ def daily_report():
             df_logs = pd.read_csv(VISITOR_LOG_FILE)
             if not df_logs.empty and "timestamp" in df_logs.columns:
                 df_logs["date"] = df_logs["timestamp"].str[:10]
-                df_today = df_logs[df_logs["date"] == today_str]
+                # Считаем за весь вчерашний день
+                df_today = df_logs[df_logs["date"] == target_date]
                 total_views = len(df_today)
                 if "ip" in df_today.columns:
                     unique_ips = set(df_today["ip"].dropna().tolist())
@@ -400,14 +404,14 @@ def daily_report():
             df_leads = pd.read_csv(LEADS_FILE)
             if not df_leads.empty and "timestamp" in df_leads.columns:
                 df_leads["date"] = df_leads["timestamp"].str[:10]
-                leads_today = len(df_leads[df_leads["date"] == today_str])
+                leads_today = len(df_leads[df_leads["date"] == target_date])
         except Exception as e:
             print("Ошибка чтения лидов:", e)
 
     text = (
         f"📊 <b>ЕЖЕДНЕВНАЯ СТАТИСТИКА САЙТА</b>\n"
-        f"📅 Дата: <code>{today_str}</code>\n\n"
-        f"👀 Просмотров страниц: <b>{total_views}</b>\n"
+        f"📅 За дату: <code>{target_date}</code>\n\n"
+        f"👀 Просмотров за день: <b>{total_views}</b>\n"
         f"👥 Уникальных посетителей (IP): <b>{len(unique_ips)}</b>\n"
         f"📩 Новых RFQ-лидов: <b>{leads_today}</b>"
     )
@@ -419,7 +423,7 @@ def daily_report():
         except Exception as e:
             print("Ошибка отправки отчета в Telegram:", e)
             
-    return f"Report sent: {total_views} views, {len(unique_ips)} unique IPs, {leads_today} leads."
+    return f"Report sent for {target_date}: {total_views} views, {len(unique_ips)} unique IPs, {leads_today} leads."
 
 if __name__ == "__main__":
     app.run(port=5000, debug=False)
